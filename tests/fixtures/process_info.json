@@ -1,0 +1,154 @@
+{
+ "w8:p1": {
+  "pane_id": "w8:p1",
+  "shell_pid": 11959,
+  "foreground_process_group_id": 12032,
+  "foreground_processes": [
+   {
+    "pid": 13348,
+    "name": "dart",
+    "argv0": "dart",
+    "argv": [
+     "/opt/sdk/bin/dart",
+     "language-server",
+     "--protocol",
+     "lsp"
+    ],
+    "cmdline": "/opt/sdk/bin/dart language-server --protocol lsp",
+    "cwd": "/Users/user/dev/app"
+   },
+   {
+    "pid": 13287,
+    "name": "dart",
+    "argv0": "dart",
+    "argv": [
+     "/opt/sdk/bin/dart",
+     "mcp-server"
+    ],
+    "cmdline": "/opt/sdk/bin/dart mcp-server",
+    "cwd": "/Users/user/dev/app"
+   },
+   {
+    "pid": 12032,
+    "name": "2.1.299",
+    "argv0": "claude",
+    "argv": [
+     "claude",
+     "--resume",
+     "00000000-0000-4000-8000-000000000001"
+    ],
+    "cmdline": "claude --resume 00000000-0000-4000-8000-000000000001",
+    "cwd": "/Users/user/dev/app"
+   }
+  ]
+ },
+ "w8:pN": {
+  "pane_id": "w8:pN",
+  "shell_pid": 32877,
+  "foreground_process_group_id": 34372,
+  "foreground_processes": [
+   {
+    "pid": 46033,
+    "name": "caffeinate",
+    "argv0": "caffeinate",
+    "argv": [
+     "caffeinate",
+     "-i",
+     "-t",
+     "300"
+    ],
+    "cmdline": "caffeinate -i -t 300",
+    "cwd": "/Users/user/dev/app"
+   },
+   {
+    "pid": 34802,
+    "name": "dart",
+    "argv0": "dart",
+    "argv": [
+     "/opt/sdk/bin/dart",
+     "language-server",
+     "--protocol",
+     "lsp"
+    ],
+    "cmdline": "/opt/sdk/bin/dart language-server --protocol lsp",
+    "cwd": "/Users/user/dev/app"
+   },
+   {
+    "pid": 34750,
+    "name": "dart",
+    "argv0": "dart",
+    "argv": [
+     "/opt/sdk/bin/dart",
+     "mcp-server"
+    ],
+    "cmdline": "/opt/sdk/bin/dart mcp-server",
+    "cwd": "/Users/user/dev/app"
+   },
+   {
+    "pid": 34372,
+    "name": "2.1.300",
+    "argv0": "claude",
+    "argv": [
+     "claude"
+    ],
+    "cmdline": "claude",
+    "cwd": "/Users/user/dev/app"
+   }
+  ]
+ },
+ "w9:p1": {
+  "pane_id": "w9:p1",
+  "shell_pid": 12105,
+  "foreground_process_group_id": 12174,
+  "foreground_processes": [
+   {
+    "pid": 12174,
+    "name": "2.1.299",
+    "argv0": "claude",
+    "argv": [
+     "claude",
+     "--resume",
+     "00000000-0000-4000-8000-000000000003"
+    ],
+    "cmdline": "claude --resume 00000000-0000-4000-8000-000000000003",
+    "cwd": "/Users/user/dev/notes"
+   }
+  ]
+ },
+ "w9:p5": {
+  "pane_id": "w9:p5",
+  "shell_pid": 12257,
+  "foreground_process_group_id": 12339,
+  "foreground_processes": [
+   {
+    "pid": 12339,
+    "name": "2.1.299",
+    "argv0": "claude",
+    "argv": [
+     "claude",
+     "--resume",
+     "00000000-0000-4000-8000-000000000004"
+    ],
+    "cmdline": "claude --resume 00000000-0000-4000-8000-000000000004",
+    "cwd": "/Users/user/dev/notes"
+   }
+  ]
+ },
+ "w9:pD": {
+  "pane_id": "w9:pD",
+  "shell_pid": 11891,
+  "foreground_process_group_id": 11891,
+  "foreground_processes": [
+   {
+    "pid": 11891,
+    "name": "zsh",
+    "argv0": "zsh",
+    "argv": [
+     "-zsh"
+    ],
+    "cmdline": "-zsh",
+    "cwd": "/Users/user/dev/notes/service"
+   }
+  ]
+ }
+}

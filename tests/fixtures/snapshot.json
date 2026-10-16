@@ -1,0 +1,160 @@
+{
+ "version": "0.9.3",
+ "protocol": 22,
+ "focused_workspace_id": "w9",
+ "focused_tab_id": "w9:t5",
+ "focused_pane_id": "w9:p5",
+ "workspaces": [
+  {
+   "workspace_id": "w8",
+   "number": 1,
+   "label": "[1] app",
+   "focused": false,
+   "pane_count": 2,
+   "tab_count": 2,
+   "active_tab_id": "w8:tC",
+   "agent_status": "working"
+  },
+  {
+   "workspace_id": "w9",
+   "number": 2,
+   "label": "[2] notes",
+   "focused": true,
+   "pane_count": 3,
+   "tab_count": 3,
+   "active_tab_id": "w9:t5",
+   "agent_status": "idle"
+  }
+ ],
+ "tabs": [
+  {
+   "tab_id": "w8:t1",
+   "workspace_id": "w8",
+   "number": 1,
+   "label": "[1] Review commits",
+   "pane_count": 1,
+   "agent_status": "idle"
+  },
+  {
+   "tab_id": "w8:tC",
+   "workspace_id": "w8",
+   "number": 12,
+   "label": "[2] Plan the next release",
+   "pane_count": 1,
+   "agent_status": "working"
+  },
+  {
+   "tab_id": "w9:t1",
+   "workspace_id": "w9",
+   "number": 1,
+   "label": "[1] Project notes",
+   "pane_count": 1,
+   "agent_status": "idle"
+  },
+  {
+   "tab_id": "w9:t5",
+   "workspace_id": "w9",
+   "number": 5,
+   "label": "[2] Phase 3 work",
+   "pane_count": 1,
+   "agent_status": "idle"
+  },
+  {
+   "tab_id": "w9:t7",
+   "workspace_id": "w9",
+   "number": 7,
+   "label": "[3] service › zsh",
+   "pane_count": 1,
+   "agent_status": "unknown"
+  }
+ ],
+ "panes": [
+  {
+   "pane_id": "w8:p1",
+   "workspace_id": "w8",
+   "tab_id": "w8:t1",
+   "focused": false,
+   "cwd": "/Users/user/dev/app",
+   "foreground_cwd": "/Users/user/dev/app",
+   "agent": "claude",
+   "agent_status": "idle",
+   "terminal_title": "Review commits and clean up",
+   "terminal_title_stripped": "Review commits and clean up",
+   "agent_session": {
+    "source": "herdr:claude",
+    "agent": "claude",
+    "kind": "id",
+    "value": "00000000-0000-4000-8000-000000000001"
+   },
+   "revision": 1
+  },
+  {
+   "pane_id": "w8:pN",
+   "workspace_id": "w8",
+   "tab_id": "w8:tC",
+   "focused": false,
+   "cwd": "/Users/user/dev/app",
+   "foreground_cwd": "/Users/user/dev/app",
+   "agent": "claude",
+   "agent_status": "working",
+   "terminal_title": "Plan the next release",
+   "terminal_title_stripped": "Plan the next release",
+   "agent_session": {
+    "source": "herdr:claude",
+    "agent": "claude",
+    "kind": "id",
+    "value": "00000000-0000-4000-8000-000000000002"
+   },
+   "revision": 1
+  },
+  {
+   "pane_id": "w9:p1",
+   "workspace_id": "w9",
+   "tab_id": "w9:t1",
+   "focused": false,
+   "cwd": "/Users/user/dev/notes",
+   "foreground_cwd": "/Users/user/dev/notes",
+   "agent": "claude",
+   "agent_status": "idle",
+   "terminal_title": "Write project notes",
+   "terminal_title_stripped": "Write project notes",
+   "agent_session": {
+    "source": "herdr:claude",
+    "agent": "claude",
+    "kind": "id",
+    "value": "00000000-0000-4000-8000-000000000003"
+   },
+   "revision": 1
+  },
+  {
+   "pane_id": "w9:p5",
+   "workspace_id": "w9",
+   "tab_id": "w9:t5",
+   "focused": true,
+   "cwd": "/Users/user/dev/notes",
+   "foreground_cwd": "/Users/user/dev/notes",
+   "agent": "claude",
+   "agent_status": "working",
+   "terminal_title": "phase-3-plan",
+   "terminal_title_stripped": "phase-3-plan",
+   "agent_session": {
+    "source": "herdr:claude",
+    "agent": "claude",
+    "kind": "id",
+    "value": "00000000-0000-4000-8000-000000000004"
+   },
+   "revision": 1
+  },
+  {
+   "pane_id": "w9:pD",
+   "workspace_id": "w9",
+   "tab_id": "w9:t7",
+   "focused": false,
+   "label": "Files",
+   "cwd": "/Users/user/dev/notes/service",
+   "foreground_cwd": "/Users/user/dev/notes/service",
+   "agent_status": "unknown",
+   "revision": 0
+  }
+ ]
+}

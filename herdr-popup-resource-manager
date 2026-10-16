@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""herdr-resource-manager: CPU and memory per herdr workspace, tab and pane, as a popup TUI.
+"""herdr-popup-resource-manager: CPU and memory per herdr workspace, tab and pane, as a popup TUI.
 
 macOS only (`ps` and `sysctl` flags). Python 3.9+ standard library only.
 """
@@ -26,7 +26,7 @@ TREND_MIN_SPAN = 0.05
 OUTSIDE_TOP = 3
 HOT_CPU = 50.0
 SPARK = "▁▂▃▄▅▆▇█"
-TITLE = "herdr-resource-manager"
+TITLE = "popup-resource-manager"
 DEFAULT_SOCKET = os.path.expanduser("~/.config/herdr/herdr.sock")
 
 
@@ -425,7 +425,8 @@ class App:
         self.selected: Optional[str] = None
         self.last_index = 0
         self.scroll = 0
-        self.message = ""
+        self.message = ""  # from a key press (failed focus/close, hints); cleared by the next key
+        self.sample_error = ""  # from sampling; cleared by the next successful sample
         self.confirm: Optional[Node] = None
         self.history: Dict[str, collections.deque] = {}
         self.ram = system_memory()
@@ -464,10 +465,9 @@ class App:
         try:
             self.frame = self.sampler.sample()
         except (HerdrError, OSError) as e:
-            self.message = str(e)
+            self.sample_error = str(e)
             return
-        if self.message and not self.confirm:
-            self.message = ""
+        self.sample_error = ""
         for n in self.frame.nodes:
             self.history.setdefault(n.id, collections.deque(maxlen=TREND_LEN)).append(n.usage.rss)
 
@@ -504,7 +504,8 @@ class App:
         scr.border()
         self.put(0, 2, f" {TITLE} ", self.color("accent") | curses.A_BOLD)
         note = f" CPU 100% = 1 core of {self.cores} "
-        self.put_right(0, w - 2, note, self.color("grey"))
+        if text_width(note) + text_width(TITLE) + 8 <= w:  # skip rather than overwrite the title
+            self.put_right(0, w - 2, note, self.color("grey"))
 
         left, right = 2, w - 3
         inner = right - left + 1
@@ -527,7 +528,7 @@ class App:
         visible = list_bottom - list_top + 1
         rows = self.rows()
         if self.frame is None:
-            self.put(list_top, left, self.message or "Sampling…", self.color("error") if self.message else dim)
+            self.put(list_top, left, self.sample_error or "Sampling…", self.color("error") if self.sample_error else dim)
         sel = self.selected_index(rows)
         if rows:
             self.selected = rows[sel].node.id
@@ -591,8 +592,8 @@ class App:
             text = f"close {self.confirm.pane_id} ({self.confirm.label})? y/N"
             self.put(y, left, truncate(text, inner), self.color("orange") | curses.A_BOLD)
             return
-        if self.message:
-            self.put(y, left, truncate(self.message, inner), self.color("error"))
+        if self.message or self.sample_error:
+            self.put(y, left, truncate(self.message or self.sample_error, inner), self.color("error"))
             return
         x = left
         keys = [("↑↓", "move"), ("space", "fold"), ("enter", "focus"), ("x", "close pane"), ("q", "quit")]
@@ -611,10 +612,10 @@ class App:
         rows = self.rows()
         sel = self.selected_index(rows)
         node = rows[sel].node if rows else None
+        self.message = ""
         if self.confirm:
             target, self.confirm = self.confirm, None
-            if key in ("y", "Y"):
-                self.act("pane.close", {"pane_id": target.pane_id})
+            if key in ("y", "Y") and self.act("pane.close", {"pane_id": target.pane_id}):
                 self.refresh_data()
             return True
         if key in ("q", "Q", "\x1b"):

@@ -15,7 +15,7 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIXTURES = os.path.join(ROOT, "tests", "fixtures")
 
-_loader = importlib.machinery.SourceFileLoader("rm", os.path.join(ROOT, "herdr-resource-manager"))
+_loader = importlib.machinery.SourceFileLoader("rm", os.path.join(ROOT, "herdr-popup-resource-manager"))
 _spec = importlib.util.spec_from_loader("rm", _loader)
 rm = importlib.util.module_from_spec(_spec)
 sys.modules["rm"] = rm  # dataclasses look the module up by name
@@ -340,6 +340,29 @@ class KeysTest(unittest.TestCase):
         self.app.selected = "w9:gone"
         self.assertEqual(self.app.selected_index(rows), i)
         self.assertEqual(self.app.selected_index(rows[:3]), 2)
+
+    def test_failed_close_error_survives_refresh_until_next_key(self):
+        def refuse(method, params=None):
+            raise rm.HerdrError("pane.close: refused")
+
+        self.app.request = refuse
+        self.select("w9:pD")
+        self.app.handle_key("x")
+        self.app.handle_key("y")
+        self.app.refresh_data()
+        self.assertIn("refused", self.app.message)
+        self.app.handle_key("j")
+        self.assertEqual(self.app.message, "")
+
+    def test_sampling_error_clears_on_next_good_sample(self):
+        good = self.app.sampler
+        bad = rm.Sampler(lambda m, p=None: (_ for _ in ()).throw(rm.HerdrError("socket gone")), lambda: PROCS)
+        self.app.sampler = bad
+        self.app.refresh_data()
+        self.assertEqual(self.app.sample_error, "socket gone")
+        self.app.sampler = good
+        self.app.refresh_data()
+        self.assertEqual(self.app.sample_error, "")
 
     def test_q_and_esc_quit(self):
         self.assertFalse(self.app.handle_key("q"))

@@ -1,8 +1,8 @@
-# herdr-plugin.toml: CPU and memory per workspace, tab and pane, in a popup.
-id = "herdr-resource-manager"
-name = "herdr-resource-manager"
+# herdr-plugin.toml: a popup with CPU and memory per workspace, tab and pane.
+id = "herdr-popup-resource-manager"
+name = "Popup Resource Manager"
 version = "0.1.0"
-description = "Popup showing CPU and memory used by each herdr workspace, tab and pane, with a memory trend."
+description = "Live CPU and memory popup for every herdr workspace, tab and agent pane, with a memory trend. Zero dependencies."
 min_herdr_version = "0.9.3"
 platforms = ["macos"]
 
@@ -12,7 +12,7 @@ title = "Resources"
 placement = "popup"
 width = "80%"
 height = "70%"
-command = ["./herdr-resource-manager"]
+command = ["./herdr-popup-resource-manager"]
 
 [[actions]]
 id = "open"

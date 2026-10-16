@@ -1,0 +1,17 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unittest:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python version (the system python3 is the plugin's real target)
+        run: /usr/bin/python3 --version
+      - name: Unit tests
+        run: /usr/bin/python3 -m unittest discover -s tests -v
+      - name: Plugin compiles
+        run: /usr/bin/python3 -m py_compile herdr-popup-resource-manager

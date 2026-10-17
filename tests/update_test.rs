@@ -1,7 +1,7 @@
 mod common;
 
 use common::NO_PID;
-use herdr_popup_resource_manager::app::{Cmd, Key, Model, Msg, TREND_LEN, update};
+use herdr_popup_resource_manager::app::{Cmd, Key, LIST_TOP, Model, Mouse, Msg, TREND_LEN, update};
 use herdr_popup_resource_manager::herdr::client::Target;
 use herdr_popup_resource_manager::sampler::Frame;
 use herdr_popup_resource_manager::tree::build_tree;
@@ -296,4 +296,141 @@ fn scrolling_keeps_the_selection_visible() {
     assert_eq!((m.selected_index(), m.scroll), (7, 3));
     update(&mut m, Msg::Resized { w: 110, h: 40 });
     assert_eq!(m.scroll, 0, "everything fits again");
+}
+
+/// Index of row `id` in the list as shown.
+fn index_of(m: &Model, id: &str) -> usize {
+    m.rows().iter().position(|r| r.node.id == id).unwrap()
+}
+
+/// A left click at column `col` on the screen line showing list row `index`.
+fn click_row(m: &mut Model, index: usize, col: u16) -> Vec<Cmd> {
+    let row = LIST_TOP + (index - m.scroll) as u16;
+    update(m, Msg::Mouse(Mouse::Click { col, row }))
+}
+
+#[test]
+fn a_click_selects_the_row_under_the_pointer() {
+    let mut m = model();
+    let i = index_of(&m, "w9:p1");
+    assert_eq!(click_row(&mut m, i, 30), []);
+    assert_eq!(m.selected.as_deref(), Some("w9:p1"));
+}
+
+#[test]
+fn clicking_the_selected_row_again_goes_to_it() {
+    let mut m = model();
+    let i = index_of(&m, "w9:p1");
+    click_row(&mut m, i, 30);
+    assert_eq!(
+        click_row(&mut m, i, 30),
+        [Cmd::Focus(Target::Pane("w9:p1".into()))]
+    );
+}
+
+#[test]
+fn clicking_the_fold_arrow_folds_without_going_there() {
+    let mut m = model();
+    select(&mut m, "w8");
+    let i = index_of(&m, "w8");
+    assert_eq!(
+        click_row(&mut m, i, 2),
+        [],
+        "w8 is selected, but the arrow only folds"
+    );
+    assert!(m.folded.contains("w8"));
+    click_row(&mut m, i, 3);
+    assert!(!m.folded.contains("w8"));
+}
+
+#[test]
+fn clicks_off_the_list_do_nothing() {
+    let mut m = model();
+    select(&mut m, "w9:p1");
+    let rows = m.rows().len() as u16;
+    for row in [0, 1, LIST_TOP - 1, LIST_TOP + rows, 38] {
+        assert_eq!(
+            update(&mut m, Msg::Mouse(Mouse::Click { col: 30, row })),
+            []
+        );
+    }
+    assert_eq!(m.selected.as_deref(), Some("w9:p1"));
+}
+
+#[test]
+fn clicks_follow_the_scroll() {
+    let mut m = Model::new(18 << 30, 11, (110, 12));
+    update(
+        &mut m,
+        Msg::Sampled {
+            generation: 0,
+            result: Ok(fixture_frame()),
+        },
+    );
+    for _ in 0..7 {
+        key(&mut m, Key::Down);
+    }
+    assert_eq!(m.scroll, 3);
+    update(
+        &mut m,
+        Msg::Mouse(Mouse::Click {
+            col: 30,
+            row: LIST_TOP,
+        }),
+    );
+    assert_eq!(m.selected_index(), 3, "the top visible row is row 3");
+}
+
+#[test]
+fn the_wheel_moves_the_selection() {
+    let mut m = model();
+    select(&mut m, "w8");
+    update(&mut m, Msg::Mouse(Mouse::ScrollDown));
+    assert_eq!(m.selected.as_deref(), Some("w8:t1"));
+    update(&mut m, Msg::Mouse(Mouse::ScrollUp));
+    assert_eq!(m.selected.as_deref(), Some("w8"));
+}
+
+#[test]
+fn a_click_cancels_a_pending_close() {
+    let mut m = model();
+    select(&mut m, "w9:pD");
+    key(&mut m, Key::Char('x'));
+    let i = index_of(&m, "w9:pD");
+    assert_eq!(click_row(&mut m, i, 30), []);
+    assert!(m.confirm.is_none());
+}
+
+#[test]
+fn clicks_are_ignored_while_the_popup_is_too_small_to_draw() {
+    let mut m = Model::new(18 << 30, 11, (30, 6));
+    update(
+        &mut m,
+        Msg::Sampled {
+            generation: 0,
+            result: Ok(fixture_frame()),
+        },
+    );
+    key(&mut m, Key::Down);
+    key(&mut m, Key::Down);
+    let click = Msg::Mouse(Mouse::Click {
+        col: 5,
+        row: LIST_TOP,
+    });
+    assert_eq!(update(&mut m, click.clone()), []);
+    assert_eq!(
+        update(&mut m, click),
+        [],
+        "a second click doesn't go there either"
+    );
+    assert_eq!(m.selected_index(), 2);
+}
+
+#[test]
+fn folding_away_the_selected_row_selects_the_folded_row() {
+    let mut m = model();
+    select(&mut m, "w9:p1");
+    let i = index_of(&m, "w9");
+    click_row(&mut m, i, 2);
+    assert_eq!(m.selected.as_deref(), Some("w9"));
 }

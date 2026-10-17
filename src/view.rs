@@ -6,15 +6,13 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Widget};
 
-use crate::app::{Model, list_rows};
+use crate::app::{LIST_LEFT, LIST_TOP, MIN_H, MIN_W, Model, list_rows};
 use crate::format::{format_bytes, format_cpu, sparkline, text_width, truncate};
 use crate::tree::{NodeKind, Row};
 
 pub const TITLE: &str = "popup-resource-manager";
 /// CPU at or above this (percent of one core) is highlighted.
 const HOT_CPU: f64 = 50.0;
-const MIN_W: u16 = 40;
-const MIN_H: u16 = 8;
 const CPU_W: u16 = 7;
 const MEM_W: u16 = 10;
 const GAP: u16 = 2;
@@ -61,7 +59,7 @@ struct Columns {
 
 impl Columns {
     fn new(area: Rect) -> Columns {
-        let left = area.x + 2;
+        let left = area.x + LIST_LEFT;
         let right = area.x + area.width - 3;
         let inner = right - left + 1;
         let trend_w = if inner >= TREND_MIN_INNER {
@@ -139,7 +137,7 @@ pub fn view(model: &Model, frame: &mut Frame) {
     }
     buf.set_string(c.left, area.y + 2, &rule, dim);
 
-    let list_top = area.y + 3;
+    let list_top = area.y + LIST_TOP;
     if model.frame.is_none() {
         let (text, style) = match &model.sample_error {
             Some(e) => (e.as_str(), fg(palette::ERROR)),

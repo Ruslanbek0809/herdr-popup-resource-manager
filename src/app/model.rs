@@ -8,6 +8,13 @@ use crate::tree::{Row, flatten};
 pub const TREND_LEN: usize = 120;
 /// Lines the frame uses besides the list: border, header, two rules, total, footer, border.
 const CHROME_ROWS: u16 = 7;
+/// Screen line of the first list row (below the border, header and rule).
+pub const LIST_TOP: u16 = 3;
+/// Screen column where list rows start (border + one space).
+pub const LIST_LEFT: u16 = 2;
+/// Below this size the popup only asks to be enlarged.
+pub const MIN_W: u16 = 40;
+pub const MIN_H: u16 = 8;
 
 /// How many list rows fit in a popup `height` lines tall.
 pub fn list_rows(height: u16) -> usize {
@@ -26,6 +33,14 @@ pub enum Key {
     Char(char),
 }
 
+/// Mouse input the app reacts to. `col` and `row` are screen cells from the top-left corner.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mouse {
+    Click { col: u16, row: u16 },
+    ScrollUp,
+    ScrollDown,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Msg {
     /// A sample from the sampler thread. `generation` is the one it was asked for (see [`Cmd::SampleNow`]).
@@ -34,6 +49,7 @@ pub enum Msg {
         result: Result<Frame, String>,
     },
     Key(Key),
+    Mouse(Mouse),
     Resized {
         w: u16,
         h: u16,

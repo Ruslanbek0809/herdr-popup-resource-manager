@@ -4,5 +4,7 @@
 mod model;
 mod update;
 
-pub use model::{Cmd, Confirm, Key, Model, Msg, TREND_LEN, list_rows};
+pub use model::{
+    Cmd, Confirm, Key, LIST_LEFT, LIST_TOP, MIN_H, MIN_W, Model, Mouse, Msg, TREND_LEN, list_rows,
+};
 pub use update::update;

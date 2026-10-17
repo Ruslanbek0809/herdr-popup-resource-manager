@@ -6,13 +6,17 @@ use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use herdr_popup_resource_manager::app::{Cmd, Key, Model, Msg, update};
+use herdr_popup_resource_manager::app::{Cmd, Key, Model, Mouse, Msg, update};
 use herdr_popup_resource_manager::herdr::client::{Herdr, SocketClient};
 use herdr_popup_resource_manager::procs::platform_source;
 use herdr_popup_resource_manager::sampler::Sampler;
 use herdr_popup_resource_manager::view::view;
 use ratatui::DefaultTerminal;
-use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
+use ratatui::crossterm::event::{
+    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
+    MouseButton, MouseEvent, MouseEventKind,
+};
+use ratatui::crossterm::execute;
 
 const SAMPLE_EVERY: Duration = Duration::from_secs(1);
 /// The second sample comes sooner so CPU numbers appear quickly.
@@ -35,7 +39,8 @@ fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let result = run(&mut terminal);
+    let result = execute!(std::io::stdout(), EnableMouseCapture).and_then(|_| run(&mut terminal));
+    let _ = execute!(std::io::stdout(), DisableMouseCapture);
     let restored = ratatui::try_restore();
     match result.and(restored) {
         Ok(()) => ExitCode::SUCCESS,
@@ -110,6 +115,18 @@ fn to_key(code: KeyCode, modifiers: KeyModifiers) -> Option<Key> {
     })
 }
 
+fn to_mouse(m: MouseEvent) -> Option<Mouse> {
+    Some(match m.kind {
+        MouseEventKind::Down(MouseButton::Left) => Mouse::Click {
+            col: m.column,
+            row: m.row,
+        },
+        MouseEventKind::ScrollUp => Mouse::ScrollUp,
+        MouseEventKind::ScrollDown => Mouse::ScrollDown,
+        _ => return None,
+    })
+}
+
 fn total_memory() -> u64 {
     let mut system = sysinfo::System::new();
     system.refresh_memory();
@@ -158,6 +175,7 @@ fn run(terminal: &mut DefaultTerminal) -> std::io::Result<()> {
                 Event::Key(k) if k.kind == KeyEventKind::Press => {
                     to_key(k.code, k.modifiers).map(Msg::Key)
                 }
+                Event::Mouse(m) => to_mouse(m).map(Msg::Mouse),
                 Event::Resize(w, h) => Some(Msg::Resized { w, h }),
                 _ => None,
             };

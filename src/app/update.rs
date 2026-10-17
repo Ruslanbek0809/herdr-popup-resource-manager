@@ -1,6 +1,8 @@
 use std::collections::{HashSet, VecDeque};
 
-use super::model::{Cmd, Confirm, Key, Model, Msg, TREND_LEN};
+use super::model::{
+    Cmd, Confirm, Key, LIST_LEFT, LIST_TOP, MIN_H, MIN_W, Model, Mouse, Msg, TREND_LEN,
+};
 use crate::herdr::client::Target;
 use crate::sampler::Frame;
 use crate::tree::NodeKind;
@@ -20,6 +22,7 @@ pub fn update(model: &mut Model, msg: Msg) -> Vec<Cmd> {
             vec![]
         }
         Msg::Key(key) => on_key(model, key),
+        Msg::Mouse(mouse) => on_mouse(model, mouse),
         Msg::Resized { w, h } => {
             model.viewport = (w, h);
             vec![]
@@ -109,6 +112,56 @@ fn on_key(model: &mut Model, key: Key) -> Vec<Cmd> {
         },
         Key::Char(_) => {}
     }
+    vec![]
+}
+
+/// Mouse input works like the keys: the wheel moves, a click selects, a click on the fold arrow folds,
+/// and a click on the already selected row goes there (like `enter`).
+fn on_mouse(model: &mut Model, mouse: Mouse) -> Vec<Cmd> {
+    let (col, row) = match mouse {
+        Mouse::ScrollUp => return on_key(model, Key::Up),
+        Mouse::ScrollDown => return on_key(model, Key::Down),
+        Mouse::Click { col, row } => (col, row),
+    };
+    model.message = None;
+    if model.confirm.take().is_some() {
+        return vec![];
+    }
+    let (w, h) = model.viewport;
+    if w < MIN_W || h < MIN_H || row < LIST_TOP {
+        return vec![];
+    }
+    let line = usize::from(row - LIST_TOP);
+    if line >= model.visible_rows() {
+        return vec![];
+    }
+    let index = model.scroll + line;
+    let rows = model.rows();
+    let Some(clicked) = rows.get(index) else {
+        return vec![];
+    };
+    let id = clicked.node.id.clone();
+    let arrow = LIST_LEFT + (clicked.depth * 2) as u16;
+    if clicked.foldable && (arrow..arrow + 2).contains(&col) {
+        if !model.folded.remove(&id) {
+            model.folded.insert(id.clone());
+        }
+        // If the selection was inside the folded row, the folded row takes it.
+        if !model
+            .rows()
+            .iter()
+            .any(|r| Some(&r.node.id) == model.selected.as_ref())
+        {
+            model.selected = Some(id);
+            model.last_index = index;
+        }
+        return vec![];
+    }
+    if index == model.selected_index() {
+        return on_key(model, Key::Enter);
+    }
+    model.selected = Some(id);
+    model.last_index = index;
     vec![]
 }
 

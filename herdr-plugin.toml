@@ -2,9 +2,14 @@
 id = "herdr-popup-resource-manager"
 name = "Popup Resource Manager"
 version = "0.1.0"
-description = "Live CPU and memory popup for every herdr workspace, tab and agent pane, with a memory trend. Zero dependencies."
+description = "Live CPU and memory popup for every herdr workspace, tab and agent pane, with a memory trend."
 min_herdr_version = "0.9.3"
-platforms = ["macos"]
+platforms = ["macos", "linux"]
+
+# At `herdr plugin install`: download the SHA-256-verified prebuilt binary for this version, else build with
+# cargo. (`herdr plugin link` doesn't run this; build with `cargo build --release` yourself.)
+[[build]]
+command = ["/bin/sh", "scripts/fetch-or-build.sh"]
 
 [[panes]]
 id = "resource-manager"
@@ -12,10 +17,10 @@ title = "Resources"
 placement = "popup"
 width = "80%"
 height = "70%"
-command = ["./herdr-popup-resource-manager"]
+command = ["./target/release/herdr-popup-resource-manager"]
 
 [[actions]]
 id = "open"
 title = "Open resource manager"
 description = "Show CPU and memory per workspace, tab and pane."
-command = ["bash", "scripts/open.sh"]
+command = ["/bin/sh", "scripts/open.sh"]

@@ -5,7 +5,30 @@ on:
   pull_request:
 
 jobs:
-  unittest:
+  rust:
+    name: rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo fmt --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - run: cargo test --locked
+
+  python:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,5 +36,3 @@ jobs:
         run: /usr/bin/python3 --version
       - name: Unit tests
         run: /usr/bin/python3 -m unittest discover -s tests -v
-      - name: Plugin compiles
-        run: /usr/bin/python3 -m py_compile herdr-popup-resource-manager

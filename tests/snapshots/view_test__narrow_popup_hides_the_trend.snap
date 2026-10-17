@@ -1,0 +1,19 @@
+---
+source: tests/view_test.rs
+assertion_line: 60
+expression: "render(&model(60, 14)).backend()"
+---
+"┌─ popup-resource-manager ─────── CPU 100% = 1 core of 11 ─┐"
+"│ Name                                     CPU      Memory │"
+"│ ──────────────────────────────────────────────────────── │"
+"│ ▾ [1] app                               0.0%    771.3 MB │"
+"│   ▾ [1] Review commits                  0.0%    292.5 MB │"
+"│     ● claude  Review commits and c…     0.0%    292.5 MB │"
+"│   ▾ [2] Plan the next release           0.0%    478.9 MB │"
+"│     ● claude  Plan the next release     0.0%    478.9 MB │"
+"│ ▾ [2] notes                           120.0%    860.0 MB │"
+"│   ▾ [1] Project notes                   0.0%    154.5 MB │"
+"│ ──────────────────────────────────────────────────────── │"
+"│ Total in herdr                        120.0%     1.59 GB │"
+"│ ↑↓ move  ·  space fold  ·  enter focus  ·                │"
+"└──────────────────────────────────────────────────────────┘"

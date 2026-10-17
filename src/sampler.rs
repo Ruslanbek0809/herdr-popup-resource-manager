@@ -34,8 +34,9 @@ impl<H: Herdr, P: ProcSource> Sampler<H, P> {
         }
     }
 
-    /// Takes one sample at `now`; CPU appears from the second sample on.
-    pub fn sample(&mut self, now: Instant) -> Result<Frame, Error> {
+    /// Takes one sample; CPU appears from the second sample on. `clock` is read right after the process
+    /// table, so the time between herdr's answers doesn't count towards the CPU interval.
+    pub fn sample(&mut self, clock: impl FnOnce() -> Instant) -> Result<Frame, Error> {
         let snapshot = self.herdr.snapshot()?;
         let infos = snapshot
             .panes
@@ -47,6 +48,7 @@ impl<H: Herdr, P: ProcSource> Sampler<H, P> {
             .procs
             .read()
             .map_err(|e| Error::Io(format!("process table: {e}")))?;
+        let now = clock();
         let dt = self.prev_at.map(|t| now.saturating_duration_since(t));
         let (nodes, total) = build_tree(
             &snapshot,

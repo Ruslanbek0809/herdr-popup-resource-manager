@@ -64,16 +64,16 @@ fn find<'a>(nodes: &'a [Node], id: &str) -> Option<&'a Node> {
 fn cpu_needs_two_samples_and_follows_elapsed_time() {
     let mut sampler = Sampler::new(FakeHerdr, BusyProcs { calls: 0 }, NO_PID);
     let t0 = Instant::now();
-    let first = sampler.sample(t0).unwrap();
+    let first = sampler.sample(|| t0).unwrap();
     assert_eq!(find(&first.nodes, "w9:p1").unwrap().usage.cpu, None);
-    let second = sampler.sample(t0 + Duration::from_secs(1)).unwrap();
+    let second = sampler.sample(|| t0 + Duration::from_secs(1)).unwrap();
     assert!((find(&second.nodes, "w9:p1").unwrap().usage.cpu.unwrap() - 200.0).abs() < 1e-9);
 }
 
 #[test]
 fn a_pane_that_vanishes_mid_sample_shows_without_numbers() {
     let mut sampler = Sampler::new(FakeHerdr, BusyProcs { calls: 0 }, NO_PID);
-    let frame = sampler.sample(Instant::now()).unwrap();
+    let frame = sampler.sample(Instant::now).unwrap();
     assert_eq!(find(&frame.nodes, "w9:p5").unwrap().usage.rss, 0);
 }
 
@@ -95,7 +95,7 @@ fn a_failed_snapshot_is_an_error() {
         }
     }
     let err = Sampler::new(Down, BusyProcs { calls: 0 }, NO_PID)
-        .sample(Instant::now())
+        .sample(Instant::now)
         .unwrap_err();
     assert!(err.to_string().contains("connection refused"));
 }
@@ -162,4 +162,65 @@ fn sysinfo_source_sees_this_process() {
     let me = &procs[&std::process::id()];
     assert!(me.rss > 0);
     assert!(procs.contains_key(&me.ppid), "parent {} is listed", me.ppid);
+}
+
+/// Fake time shared by a herdr that answers slowly and a process table that reads the clock.
+type Clock = Arc<Mutex<Instant>>;
+
+/// herdr from the fixtures; each sample's snapshot takes the next delay from `delays`.
+struct SlowHerdr {
+    clock: Clock,
+    delays: Vec<Duration>,
+}
+
+impl Herdr for SlowHerdr {
+    fn snapshot(&mut self) -> Result<Snapshot, Error> {
+        *self.clock.lock().unwrap() += self.delays.remove(0);
+        FakeHerdr.snapshot()
+    }
+    fn process_info(&mut self, pane_id: &str) -> Result<ProcessInfo, Error> {
+        FakeHerdr.process_info(pane_id)
+    }
+    fn focus(&mut self, _: &Target) -> Result<(), Error> {
+        unreachable!()
+    }
+    fn close_pane(&mut self, _: &str) -> Result<(), Error> {
+        unreachable!()
+    }
+}
+
+/// claude 12174 burns two cores of the fake time that passed before each read.
+struct TimedProcs {
+    clock: Clock,
+    start: Instant,
+}
+
+impl ProcSource for TimedProcs {
+    fn read(&mut self) -> io::Result<ProcTable> {
+        let elapsed = self.clock.lock().unwrap().duration_since(self.start);
+        let mut procs = common::procs();
+        procs.get_mut(&12174).unwrap().cpu_ms += elapsed.as_millis() as u64 * 2;
+        Ok(procs)
+    }
+}
+
+#[test]
+fn cpu_is_timed_from_the_process_reads_so_a_slow_herdr_doesnt_skew_it() {
+    let start = Instant::now();
+    let clock: Clock = Arc::new(Mutex::new(start));
+    let herdr = SlowHerdr {
+        clock: Arc::clone(&clock),
+        delays: vec![Duration::from_millis(10), Duration::from_millis(300)],
+    };
+    let procs = TimedProcs {
+        clock: Arc::clone(&clock),
+        start,
+    };
+    let mut sampler = Sampler::new(herdr, procs, NO_PID);
+    let now = || *clock.lock().unwrap();
+    sampler.sample(now).unwrap();
+    *clock.lock().unwrap() += Duration::from_secs(1); // the gap between samples
+    let frame = sampler.sample(now).unwrap();
+    let cpu = find(&frame.nodes, "w9:p1").unwrap().usage.cpu.unwrap();
+    assert!((cpu - 200.0).abs() < 1e-6, "cpu {cpu}");
 }

@@ -1,7 +1,8 @@
 # Popup Resource Manager for herdr
 
 Which agent is making your fan spin? A [herdr](https://herdr.dev) popup with live CPU and memory for every
-workspace, tab and pane — plus everything outside herdr — one keybinding away. Zero dependencies.
+workspace, tab and pane — plus everything outside herdr — one keybinding away. A single native binary for macOS and
+Linux.
 
 <!-- Screenshot: replace the block below with ![Popup Resource Manager](assets/screenshot.png) -->
 ```
@@ -25,18 +26,20 @@ workspace, tab and pane — plus everything outside herdr — one keybinding awa
   servers, test runs…).
 - Agent status dots (working, blocked, idle) and the agent's task title next to each pane.
 - **Memory trend** sparkline per workspace while the popup is open.
-- **Outside herdr** row: everything else on the Mac, with the top 3 apps — browsers, daemons and simulators often are
-  the real culprit.
+- **Outside herdr** row: everything else on the machine, with the top 3 apps — browsers, daemons and simulators
+  often are the real culprit.
 - Linked git-worktree workspaces are listed under their main workspace.
 - Jump to a pane (`enter`) or close it (`x`, with confirmation) straight from the list.
-- One Python file using only the standard library: no build step, nothing to install besides herdr.
+- One native binary: nothing to install besides herdr.
 
 ## Requirements
 
-- macOS (Linux is planned)
+- macOS (Apple silicon or Intel) or Linux (x86_64 or aarch64)
 - herdr 0.9.3 or newer
-- `python3` 3.9 or newer — the one from the Xcode Command Line Tools is enough. On a Mac without them,
-  `/usr/bin/python3` opens Apple's install dialog; the plugin shows a herdr notification if Python is missing.
+
+Install downloads a prebuilt binary for your platform from this repo's GitHub release and checks its SHA-256. If
+that isn't possible (other platform, offline, checksum mismatch), it builds from source instead, which needs Rust
+1.95+ ([rustup.rs](https://rustup.rs)).
 
 ## Install
 
@@ -76,30 +79,40 @@ Uninstall: `herdr plugin uninstall herdr-popup-resource-manager`, then remove th
 - **Memory** is resident memory (RSS) summed over the processes. Activity Monitor shows the "memory footprint"
   instead, so its numbers differ; shared pages are counted once per process, so sums overcount. "% of system RAM" is
   therefore approximate.
-- **Outside herdr** = every other process on the machine, with the top 3 apps by CPU (helpers grouped under their
-  `.app`). The popup's own process is left out of every row.
-- **Memory trend** keeps history only while the popup is open; a change under 5% of the row's peak draws flat.
-- Sampling costs about 2% of one core while the popup is open, nothing when it's closed.
+- **Outside herdr** = every other process on the machine, with the top 3 apps by CPU (on macOS, helpers grouped
+  under their `.app`). The popup's own process is left out of every row.
+- **Memory trend** keeps history only while the popup is open; it is scaled to at least 5% of the row's peak, so
+  small wobbles stay low.
+- Sampling costs about 3% of one core while the popup is open (measured on macOS), nothing when it's closed.
 
 ## What it runs
 
 herdr doesn't review or sandbox plugins, so here is everything this one does:
 
-- `scripts/open.sh` (the action) checks for `python3` (if it's missing: `herdr notification show`) and asks herdr
-  to open the popup.
-- `herdr-popup-resource-manager` (the popup) reads total RAM once with `sysctl`, the process table once per second
-  with `ps -A` (plus `ps -p` to name processes it hasn't seen before), and talks to herdr over its local socket (`$HERDR_SOCKET_PATH`): `session.snapshot`, `pane.process_info`,
-  and — only when you press the key — `workspace.focus` / `tab.focus` / `pane.focus` or `pane.close` (after `y`).
-- No network access, no files written, no build step, no background process when the popup is closed.
+- `scripts/fetch-or-build.sh` (at install and update) downloads `herdr-popup-resource-manager-<platform>` and
+  `SHA256SUMS` for this version from this repo's GitHub release, checks the checksum and puts the binary in
+  `target/release/`. On any miss it runs `cargo build --release --locked` instead.
+- `scripts/open.sh` (the action) checks that the binary exists (if not: `herdr notification show`) and asks herdr to
+  open the popup.
+- `herdr-popup-resource-manager` (the popup) reads the process table once per second — on macOS with `ps -A`, on
+  Linux from `/proc` — and talks to herdr over its local socket (`$HERDR_SOCKET_PATH`): `session.snapshot`,
+  `pane.process_info`, and — only when you press the key — `workspace.focus` / `tab.focus` / `pane.focus` or
+  `pane.close` (after `y`).
+- The popup makes no network requests, writes no files and leaves no background process when it's closed.
 - Started outside herdr (no socket), it shows the error and `q` quits.
 
 ## Develop
 
 ```sh
-python3 -m unittest discover -s tests -v       # also with /usr/bin/python3 (3.9)
-./herdr-popup-resource-manager --once          # one sample as JSON, run inside herdr
-herdr plugin link "$PWD"                       # use your working copy instead of the installed one
+cargo test                                                # unit tests (view snapshots via insta)
+cargo clippy --all-targets -- -D warnings
+cargo build --release
+./target/release/herdr-popup-resource-manager --once      # one sample as JSON, run inside herdr
+herdr plugin link "$PWD"                                  # use your working copy (link doesn't build: run cargo build first)
 ```
+
+A `v*` tag runs `.github/workflows/release.yml`, which builds the four binaries and publishes them with
+`SHA256SUMS`; the tag must match the version in `Cargo.toml` and `herdr-plugin.toml`.
 
 `tests/fixtures/` holds `session.snapshot`, `pane.process_info` and `ps` output captured on a real machine
 (anonymised).

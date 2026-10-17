@@ -51,10 +51,9 @@ fn once() -> ExitCode {
         platform_source(),
         std::process::id(),
     );
-    let start = Instant::now();
-    let frame = sampler.sample(start).and_then(|_| {
+    let frame = sampler.sample(Instant::now).and_then(|_| {
         thread::sleep(Duration::from_millis(500));
-        sampler.sample(Instant::now())
+        sampler.sample(Instant::now)
     });
     match frame {
         Ok(frame) => {
@@ -83,7 +82,7 @@ fn spawn_sampler(to_ui: Sender<Msg>, requests: Receiver<u64>) {
         let mut generation = 0;
         let mut wait = FIRST_GAP;
         loop {
-            let result = sampler.sample(Instant::now()).map_err(|e| e.to_string());
+            let result = sampler.sample(Instant::now).map_err(|e| e.to_string());
             if to_ui.send(Msg::Sampled { generation, result }).is_err() {
                 return;
             }
